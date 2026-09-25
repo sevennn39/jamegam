@@ -1,0 +1,16 @@
+h1 {
+font-family:Verdana, Geneva, Tahoma, sans-serif;
+color:rgb(96, 52, 21);
+}
+
+body{
+    color:rgb(213, 154, 112);
+}
+
+h2{
+    color:rgb(133, 75, 48);
+}
+
+canvas{
+    background-color:rgb(156, 111, 66);
+}
