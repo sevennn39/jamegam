@@ -4,7 +4,7 @@ color:rgb(96, 52, 21);
 }
 
 body{
-    color:rgb(213, 154, 112);
+    background-color:gray;
 }
 
 h2{
@@ -12,5 +12,8 @@ h2{
 }
 
 canvas{
-    background-color:rgb(156, 111, 66);
+    background-image:url("bgart.png");
+    background-position:center;
+    background-size:cover;
+    background-repeat:no-repeat;
 }

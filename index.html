@@ -9,25 +9,30 @@
     <h2>You are an evil bug, and the trees look delicious today.</h2>
     <div>
     </div>
-    <canvas id="myCanvas" width="480" height="320"></canvas>
+    <canvas id="myCanvas" width="960" height="640"></canvas>
     <script>
 
 var canvas = document.getElementById("myCanvas");
     var ctx = canvas.getContext("2d");
+    var gameScale = 2;
+    var gameWidth = canvas.width / gameScale;
+    var gameHeight = canvas.height / gameScale;
+    ctx.scale(gameScale, gameScale);
     var ballRadius = 10;
-    var x = canvas.width/2;
-    var y = canvas.height-30;
-    var dx = 2;
-    var dy = -2;
-    var paddleHeight = 10;
+    var paddleHeight = 45;
     var paddleWidth = 75;
-    var paddleX = (canvas.width-paddleWidth)/2;
+    var brickHeight = 51;
+    var brickWidth = 75;
+    var x = gameWidth/2;
+    var y = gameHeight - paddleHeight - ballRadius - 1;
+    var dx = 1.5;
+    var dy = -1.5;
+    var paddleX = (gameWidth-paddleWidth)/2;
     var rightPressed = false;
     var leftPressed = false;
+    var gameStarted = false;
     var brickRowCount = 5;
     var brickColumnCount = 3;
-    var brickWidth = 75;
-    var brickHeight = 20;
     var brickPadding = 10;
     var brickOffsetTop = 30;
     var brickOffsetLeft = 30;
@@ -41,22 +46,37 @@ var canvas = document.getElementById("myCanvas");
         }
     }
 
+    const blockImage = new Image();
+    blockImage.src = "blockart.png";
+
+    const ballImage = new Image();
+    ballImage.src = "ballart.png";
+
+    const paddleImage = new Image();
+    paddleImage.src = "paddleart.png";
+
+    const backgroundImage = new Image();
+    backgroundImage.src = "bgart.png";
+
     document.addEventListener("keydown", keyDownHandler, false);
     document.addEventListener("keyup", keyUpHandler, false);
     document.addEventListener("mousemove", mouseMoveHandler);
 
     function mouseMoveHandler(e) {
-  const relativeX = e.clientX - canvas.offsetLeft;
-  if (relativeX > 0 && relativeX < canvas.width) {
+    const bounds = canvas.getBoundingClientRect();
+    const relativeX = (e.clientX - bounds.left) * gameWidth / bounds.width;
+    if (relativeX > 0 && relativeX < gameWidth) {
     paddleX = relativeX - paddleWidth / 2;
   }
 }
 
     function keyDownHandler(e) {
         if(e.code  == "ArrowRight") {
+            gameStarted = true;
             rightPressed = true;
         }
         else if(e.code == 'ArrowLeft') {
+            gameStarted = true;
             leftPressed = true;
         }
     }
@@ -102,18 +122,41 @@ var canvas = document.getElementById("myCanvas");
 }
 
     function drawBall() {
-        ctx.beginPath();
-        ctx.arc(x, y, ballRadius, 0, Math.PI*2);
-        ctx.fillStyle = "#0095DD";
-        ctx.fill();
-        ctx.closePath();
-    }
+    ctx.drawImage(
+        ballImage,
+        x - ballRadius,
+        y - ballRadius * (284 / 303),
+        ballRadius * 2,
+        ballRadius * 2 * (284 / 303)
+    );
+}
+
     function drawPaddle() {
-        ctx.beginPath();
-        ctx.rect(paddleX, canvas.height-paddleHeight, paddleWidth, paddleHeight);
-        ctx.fillStyle = "#0095DD";
-        ctx.fill();
-        ctx.closePath();
+    ctx.drawImage(
+        paddleImage,
+        paddleX,
+        gameHeight - paddleHeight,
+        paddleWidth,
+        paddleHeight
+    );
+}
+
+    function drawBackground() {
+        if (!backgroundImage.complete || !backgroundImage.naturalWidth) return;
+
+        const scale = Math.max(
+            gameWidth / backgroundImage.naturalWidth,
+            gameHeight / backgroundImage.naturalHeight
+        );
+        const width = backgroundImage.naturalWidth * scale;
+        const height = backgroundImage.naturalHeight * scale;
+        ctx.drawImage(
+            backgroundImage,
+            (gameWidth - width) / 2,
+            (gameHeight - height) / 2,
+            width,
+            height
+        );
     }
 
     drawScore();
@@ -127,40 +170,46 @@ var canvas = document.getElementById("myCanvas");
                     var brickY = (c*(brickHeight+brickPadding))+brickOffsetTop;
                     bricks[c][r].x = brickX;
                     bricks[c][r].y = brickY;
-                    ctx.beginPath();
-                    ctx.rect(brickX, brickY, brickWidth, brickHeight);
-                    ctx.fillStyle = "#0095DD";
-                    ctx.fill();
-                    ctx.closePath();
+                    ctx.drawImage(blockImage, brickX, brickY, brickWidth, brickHeight);
                 }
             }
         }
     }
 
     function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, gameWidth, gameHeight);
+        drawBackground();
         drawBricks();
         drawBall();
         drawPaddle();
+        drawScore();
+
+        if (!gameStarted) {
+            ctx.font = "16px Arial";
+            ctx.fillStyle = "black";
+            ctx.fillText("Press a left or right arrow key to start! :D", 90, 205);
+            return;
+        }
+
         collisionDetection();
 
-        if(x + dx > canvas.width-ballRadius || x + dx < ballRadius) {
+        if(x + dx > gameWidth-ballRadius || x + dx < ballRadius) {
             dx = -dx;
         }
         if(y + dy < ballRadius) {
             dy = -dy;
         }
-        else if(y + dy > canvas.height-ballRadius) {
+        else if(dy > 0 && y + dy > gameHeight - paddleHeight - ballRadius) {
             if(x > paddleX && x < paddleX + paddleWidth) {
                 dy = -dy;
             }
-            else {
-                alert("YOU LOSE! You lose... you lose... (bluey ref)");
-                document.location.reload();
-            }
+        }
+        if(dy > 0 && y + dy > gameHeight - ballRadius) {
+            alert("YOU LOSE! You lose... you lose... (bluey ref)");
+            document.location.reload();
         }
 
-        if(rightPressed && paddleX < canvas.width-paddleWidth) {
+        if(rightPressed && paddleX < gameWidth-paddleWidth) {
             paddleX += 7;
         }
         else if(leftPressed && paddleX > 0) {
